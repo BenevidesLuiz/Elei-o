@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sistema de Eleição</title>
+    <script type="module" src="purify.js"></script>
+
+    <script>
+        window.jsPDF = window.jspdf.jsPDF;
+    </script>
+    <style>
+        /* Variáveis de cores e fontes */
+:root {
+  --font-size: 24px;
+  --color-primary: #2E8B57; /* Verde */
+  --color-background: #f0f0f0; /* Fundo mais claro */
+  --color-text: #333;
+  --color-secondary: #555;
+  --color-hover: #228B22; /* Verde mais escuro para o botão */
+  --background-image: url('urna-eletronica.jpg'); /* Substitua 'urna-eletronica.jpg' pelo caminho da sua imagem de fundo */
+  --background-opacity: 0.2; /* Opacidade da imagem de fundo */
+}
+
+/* Estilos do corpo do documento */
+body {
+  font-family: Arial, sans-serif;
+  font-size: var(--font-size);
+  margin: 0;
+  padding: 0;
+  background-color: var(--color-background);
+  background-image: var(--background-image);
+  background-size: cover;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+
+/* Estilo do elemento separado para a imagem de fundo e ajuste do z-index */
+#background-image {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: var(--background-image);
+  background-size: cover;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  opacity: var(--background-opacity); /* Ajuste a opacidade para o nível desejado */
+  z-index: -1; /* Coloca a imagem de fundo atrás do conteúdo */
+}
+
+/* Estilo do contêiner do conteúdo dos candidatos */
+#conteudo-candidatos {
+  background-color: rgba(4, 4, 4, 0.9); /* Fundo preto com opacidade */
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  z-index: 1; /* Coloca o conteúdo dos candidatos acima da imagem de fundo */
+}
+
+/* Estilo do nome e número dos candidatos */
+#votosCandidatos .nome-candidato {
+  font-size: 24px;
+  color: var(--color-primary); /* Cor verde */
+}
+
+#votosCandidatos .numero-candidato {
+  font-size: 24px;
+  color: var(--color-primary); /* Cor verde */
+}
+
+/* Estilo do local de votação */
+#localVotacao {
+  font-size: 24px;
+  color: var(--color-primary); /* Cor verde */
+  margin-top: 20px;
+  font-weight: bold;
+  background-color: rgba(0, 0, 0, 0.7); /* Fundo preto com opacidade */
+  padding: 10px 20px; /* Espaçamento interno */
+  border-radius: 5px;
+  margin-left: 10px;
+  display: inline-block; /* Tornar em linha para evitar quebrar a linha */
+}
+
+/* Estilo do campo de entrada de número do candidato */
+input[type="number"] {
+  font-size: var(--font-size);
+  color: var(--color-text);
+  padding: 10px;
+  border: 2px solid var(--color-primary);
+  border-radius: 5px;
+  background-color: #fff; /* Fundo branco */
+  transition: border-color 0.3s ease;
+}
+
+/* Estilize a borda quando o campo estiver em foco */
+input[type="number"]:focus {
+  border-color: var(--color-hover);
+  outline: none;
+}
+
+/* Estilo do botão de votar */
+button {
+  font-size: var(--font-size);
+  padding: 12px 24px;
+  background-color: var(--color-primary); /* Cor verde */
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: var(--color-hover); /* Cor verde mais escura ao passar o mouse */
+}
+
+/* Estilo dos links */
+a {
+  color: var(--color-primary); /* Cor verde */
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+a:hover {
+  color: var(--color-hover); /* Cor verde mais escura ao passar o mouse */
+}
+
+/* Estilo dos resultados */
+#resultados {
+  margin-top: 20px;
+  margin-bottom: 20px;
+  background-color: rgba(255, 255, 255, 0.9); /* Fundo branco com opacidade */
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+#resultados h2 {
+  font-size: 28px;
+  color: var(--color-text);
+}
+
+#resultados p {
+  font-size: 24px;
+  color: var(--color-text);
+}
+
+/* Estilo dos votos dos candidatos */
+#votosCandidatos li {
+  font-size: 24px;
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  background-color: #000000; /* Fundo preto */
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2); /* Sombra leve */
+  margin-bottom: 10px;
+  transition: background-color 0.3s ease; /* Transição suave de cor de fundo */
+}
+
+#votosCandidatos li:hover {
+  background-color: var(--color-primary); /* Cor verde ao passar o mouse */
+  color: #fff; /* Cor do texto ao passar o mouse */
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2); /* Sombra leve */
+}
+
+/* Estilo das listas */
+ul {
+  font-size: var(--font-size);
+  list-style-type: none;
+  padding-left: 0;
+}
+
+li {
+  margin-bottom: 10px;
+  color: var(--color-secondary);
+}
+
+/* Estilo da mensagem de voto confirmado */
+#mensagemVotoConfirmado {
+  font-size: 24px;
+  color: var(--color-primary); /* Cor verde */
+  background-color: #e6f7ff;
+  border: 1px solid var(--color-primary);
+  border-radius: 5px;
+  padding: 10px;
+  margin-top: 10px;
+  display: none;
+}
+
+/* Estilo do temporizador */
+#temporizador {
+  font-size: 36px;
+  color: var(--color-primary); /* Cor verde */
+  background-color: rgba(0, 0, 0, 0.7); /* Fundo preto com opacidade */
+  padding: 10px 20px; /* Espaçamento interno */
+  border-radius: 5px;
+  margin-left: 10px;
+  font-weight: bold;
+  display: inline-block; /* Tornar em linha para evitar quebrar a linha */
+}
+
+/* Estilo da caixa de digitar a senha */
+input[type="password"] {
+  font-size: var(--font-size);
+  color: var(--color-text);
+  padding: 10px;
+  border: 2px solid var(--color-primary);
+  border-radius: 5px;
+  background-color: #fff; /* Fundo branco */
+  transition: border-color 0.3s ease;
+  width: 100%; /* Ajuste a largura conforme necessário */
+  max-width: 400px; /* Defina um valor máximo para a largura */
+  margin: 10px 0; /* Adicione margem para espaçamento */
+}
+
+/* Estilo das informações do candidato */
+#infoCandidato {
+  margin-top: 10px;
+  background-color: rgba(255, 255, 255, 0.9); /* Fundo branco com opacidade */
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  display: none;
+}
+
+/* Estilo dos votos dos candidatos */
+#votosCandidatos li {
+  font-size: 24px;
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  background-color: #ffffff; /* Fundo preto */
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2); /* Sombra leve */
+  margin-bottom: 10px;
+  transition: background-color 0.3s ease; /* Transição suave de cor de fundo */
+}
+
+/* Estilo da imagem do candidato dentro dos votos */
+#votosCandidatos li img {
+  width: 75px; /* Ajuste a largura da imagem conforme necessário */
+  height: 75px; /* Ajuste a altura da imagem conforme necessário */
+  border-radius: 50%;
+  object-fit: cover; /* Mantém a proporção da imagem e preenche o espaço */
+  margin-right: 10px; /* Adicione margem à direita da imagem para espaçamento */
+}
+
+#infoCandidato img {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+}
+
+#infoCandidato h3 {
+  font-size: 24px;
+  color: black;
+  margin-top: 10px;
+}
+
+#infoCandidato p {
+  font-size: 24px;
+  color:black;
+}
+    </style>
+</head>
+<body>
+<h1>Eleições</h1>
+<h2>Candidatos:</h2>
+<ul>
+    <li>
+        <img
+                src="VH.jpg"
+                alt="Victor Hugo"
+                style="
+            width: 60px;
+            height: 60px;
+            background-color: #000000;
+            border-radius: 50%;
+            margin-right: 10px;
+          "
+        />
+        1 - Victor Hugo
+    </li>
+    <li>
+        <img
+                src="PF.jpg"
+                alt="Ana Fagundes"
+                style="
+            width: 60px;
+            height: 60px;
+            background-color: #000000;
+            border-radius: 50%;
+            margin-right: 10px;
+          "
+        />
+        2 - Ana Fagundes
+    </li>
+    <li>
+        <img
+                src="GB.jpg"
+                alt="Gabriel Leite"
+                style="
+            width: 60px;
+            height: 60px;
+            
+            border-radius: 50%;
+            margin-right: 10px;
+          "
+        />
+        3 - Gabriel Leite
+    </li>
+</ul>
+
+<button id="iniciarVotacao">Iniciar Votação</button>
+
+<form id="votarForm" style="display: none">
+    <label for="candidato"
+           >Digite o número do candidato (1, 2 ou 3) ou 0 para voto nulo:</label
+    >
+    <input type="number" id="candidato" min="0" max="3" required />
+    <button type="submit" id="botaoVotar">Votar</button>
+    <span id="temporizador">
+        <span id="nomeCandidatoSelecionado"></span>
+        <span id="tempoRestante"></span> segundos até o próximo voto.
+      </span>
+</form>
+
+<div id="resultados" style="display: none">
+    <h2>Resultados:</h2>
+    <p>Total de Votos: <span id="totalVotos">0</span></p>
+    <p>Votos Nulos: <span id="votosNulos">0</span></p>
+    <p>
+        Vencedor da Eleição:
+        <span id="candidatoMaisVotos">Aguardando resultados...</span>
+    </p>
+
+    <h2>Votos de Candidatos:</h2>
+    <ul id="votosCandidatos">
+        <li>
+            <img src="VH.jpg" alt="Victor Hugo" />
+            Victor Hugo: <span id="votosVictorHugo">0</span>
+        </li>
+        <li>
+            <img src="PF.jpg" alt="Ana Fagundes" />
+            Ana Fagundes: <span id="votosAnaFagundes">0</span>
+        </li>
+        <li>
+            <img src="GB.jpg" alt="Gabriel Leite" />
+            Gabriel Leite: <span id="votosGabrielLeite">0</span>
+        </li>
+    </ul>
+</div>
+
+<!-- Campo de senha -->
+<div id="senhaContainer" style="display: none">
+    <label for="senha">Digite a senha para exibir os resultados:</label>
+    <input type="password" id="senha" />
+    <button id="verificarSenha">Verificar Senha</button>
+</div>
+
+<!-- Div para exibir as informações do candidato -->
+<div id="infoCandidato">
+    <img id="fotoCandidato" alt="Foto do Candidato" />
+    <h3 id="nomeCandidato"></h3>
+    <p id="numeroPartidoCandidato"></p>
+</div>
+
+<div id="mensagemVotoConfirmado" style="display: none"></div>
+
+<script>
+    // Variáveis globais
+    let totalVotos = 0;
+    let votosNulos = 0;
+    let candidatos = {
+        1: { nome: "Victor Hugo", votos: 0, partido: "Partido: MST" },
+        2: { nome: "Ana fagundes", votos: 0, partido: "Partido: AC" },
+        3: { nome: "Gabriel Leite", votos: 0, partido: "Partido: PCDB" },
+    };
+
+    let numPessoasVotando = 0;
+    let tempoParaProximoVoto = 8;
+    let contadorTemporizador;
+    let mensagemVotoConfirmadoTimer;
+
+    // Função para atualizar o temporizador
+    function atualizarTemporizador() {
+        const tempoRestanteSpan = document.getElementById("tempoRestante");
+        
+        const onConfirmRefresh = function (event) {
+        event.preventDefault();
+        return event.returnValue = "Are you sure you want to leave the page?";
+        }
+        window.addEventListener("beforeunload", onConfirmRefresh, { capture: true });
+
+        if (tempoParaProximoVoto > 0) {
+            tempoParaProximoVoto--;
+            tempoRestanteSpan.textContent = tempoParaProximoVoto;
+            document.getElementById("botaoVotar").disabled = true;
+        } else {
+            clearInterval(contadorTemporizador);
+            tempoRestanteSpan.textContent = "";
+            document.getElementById("botaoVotar").disabled = false;
+        }
+    }
+
+    // Função para processar um voto
+    function processarVoto(candidato) {
+        const nomeCandidatoSelecionado = document.getElementById(
+            "nomeCandidatoSelecionado"
+        );
+        if (numPessoasVotando <= 0) {
+            nomeCandidatoSelecionado.textContent = "A votação foi encerrada.";
+            document.getElementById("senhaContainer").style.display = "block";
+            document.getElementById("temporizador").style.display = "none";
+            document.getElementById("votarForm").style.display = "none"; // Oculta o formulário de votação
+            return;
+        }
+
+        if (candidato === 0) {
+            votosNulos++;
+            nomeCandidatoSelecionado.textContent = "Voto Nulo";
+        } else if (candidato in candidatos) {
+            candidatos[candidato].votos++;
+            totalVotos++;
+            nomeCandidatoSelecionado.textContent = `Voto para: ${candidatos[candidato].nome}`;
+        } else {
+            votosNulos++;
+            nomeCandidatoSelecionado.textContent = "Candidato Inválido";
+        }
+
+        numPessoasVotando--;
+
+        function verificarFimDaVotacao() {
+            if (numPessoasVotando <= 0) {
+                clearInterval(contadorTemporizador);
+                document.getElementById("botaoVotar").disabled = true;
+                document.getElementById("tempoRestante").textContent =
+                    "Votação Encerrada";
+                document.getElementById("temporizador").style.display = "none";
+            }
+        }
+
+        const mensagemVotoConfirmado = document.getElementById(
+            "mensagemVotoConfirmado"
+        );
+        mensagemVotoConfirmado.style.display = "block";
+        mensagemVotoConfirmado.textContent =
+            "Seu voto foi computado com sucesso.";
+
+        clearTimeout(mensagemVotoConfirmadoTimer);
+        mensagemVotoConfirmadoTimer = setTimeout(function () {
+            mensagemVotoConfirmado.style.display = "none";
+            nomeCandidatoSelecionado.textContent = "";
+        }, 3000);
+
+        const temporizador = document.getElementById("temporizador");
+        temporizador.style.display = "block";
+        tempoParaProximoVoto = 6;
+        atualizarTemporizador();
+        contadorTemporizador = setInterval(atualizarTemporizador, 1000);
+    }
+
+    // Função para verificar empate
+    function verificarEmpate(candidatos) {
+        let votosMaisAltos = 0;
+        let candidatosEmpatados = [];
+
+        for (const key in candidatos) {
+            const votos = candidatos[key].votos;
+
+            if (votos > votosMaisAltos) {
+                votosMaisAltos = votos;
+                candidatosEmpatados = [candidatos[key].nome];
+            } else if (votos === votosMaisAltos) {
+                candidatosEmpatados.push(candidatos[key].nome);
+            }
+        }
+
+        if (candidatosEmpatados.length > 1) {
+            return `Empate entre: ${candidatosEmpatados.join(", ")}`;
+        } else {
+            return candidatosEmpatados[0];
+        }
+    }
+
+    // Função para exibir informações do candidato
+    function exibirInfoCandidato(candidatoNumero) {
+        const infoCandidato = document.getElementById("infoCandidato");
+        const fotoCandidato = document.getElementById("fotoCandidato");
+        const nomeCandidato = document.getElementById("nomeCandidato");
+        const numeroPartidoCandidato = document.getElementById(
+            "numeroPartidoCandidato"
+        );
+
+        if (
+            candidatoNumero > 0 &&
+            candidatoNumero <= Object.keys(candidatos).length
+        ) {
+            const candidato = candidatos[candidatoNumero];
+
+            const fotoNome = {
+                1: "VH",
+                2: "PF",
+                3: "GB",
+            };
+
+            fotoCandidato.src = `${fotoNome[candidatoNumero]}.jpg`;
+            nomeCandidato.textContent = candidato.nome;
+            numeroPartidoCandidato.textContent = `Número ${candidatoNumero} - ${candidato.partido}`;
+
+            infoCandidato.style.display = "block";
+
+            setTimeout(function () {
+                infoCandidato.style.display = "none";
+            }, 3000);
+        } else {
+            infoCandidato.style.display = "none";
+        }
+    }
+
+    document
+        .getElementById("votarForm")
+        .addEventListener("submit", function (e) {
+            e.preventDefault();
+            const candidato = parseInt(
+                document.getElementById("candidato").value
+            );
+            processarVoto(candidato);
+            exibirInfoCandidato(candidato);
+            document.getElementById("candidato").value = "";
+        });
+
+    document
+        .getElementById("verificarSenha")
+        .addEventListener("click", function () {
+            const senha = document.getElementById("senha").value;
+
+            if (senha === "senha123") {
+                document.getElementById("senhaContainer").style.display = "none";
+                document.getElementById("resultados").style.display = "block";
+
+                // Atualizar resultados
+                document.getElementById("totalVotos").textContent = totalVotos;
+                document.getElementById("votosNulos").textContent = votosNulos;
+
+                const candidatoMaisVotos = verificarEmpate(candidatos);
+
+                if (
+                    candidatoMaisVotos ===
+                    "Empate entre: Victor Hugo, Ana Fagundes, Gabriel Leite"
+                ) {
+                    document.getElementById("candidatoMaisVotos").textContent =
+                        "Empate. Realize um segundo turno.";
+                } else {
+                    document.getElementById("candidatoMaisVotos").textContent =
+                        candidatoMaisVotos;
+                }
+
+                document.getElementById("votosVictorHugo").textContent =
+                    candidatos[1].votos;
+                document.getElementById("votosAnaFagundes").textContent =
+                    candidatos[2].votos;
+                document.getElementById("votosGabrielLeite").textContent =
+                    candidatos[3].votos;
+
+                    window.print();
+            } else {
+                alert("Senha incorreta. Tente novamente.");
+                document.getElementById("senha").value = "";
+            }
+        });
+
+    document
+        .getElementById("iniciarVotacao")
+        .addEventListener("click", function () {
+            numPessoasVotando = parseInt(prompt("Quantas pessoas irão votar?"));
+            document.getElementById("votarForm").style.display = "block";
+            document.getElementById("iniciarVotacao").style.display = "none";
+            contadorTemporizador = setInterval(atualizarTemporizador, 1000);
+        });
+</script>
+</body>
+</html>
